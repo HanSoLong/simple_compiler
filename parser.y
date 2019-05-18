@@ -27,6 +27,7 @@ s:ID '=' e						{ printf (" s reduced from ID=e -->"); }
 |IF c THEN s 					{ printf (" s reduced from if then -->"); }
 |IF c THEN s ELSE s		{ printf (" s reduced from if then else-->"); }
 |WHILE c DO s					{ printf (" s reduced from while do -->"); }
+|s ';'
 ;
 
 c:e '>' e			{ printf (" c reduced from e>e -->"); }
