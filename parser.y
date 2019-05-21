@@ -3,62 +3,98 @@
 %{
 	#include <ctype.h>
 	#include <stdio.h>
+	#include<string.h>
+	#include<stdlib.h>
 	#define YYDEBUG 1
+	int place_counter;
   int yylex();
   void yyerror(const char *s);
+  extern FILE* yyin;
+  struct node{
+  	char *code;
+  	char *place;
+  };
+  char* place_gen();
+  char* calc_gen(char* place, char* a, char* b, char item);
+	struct node* node_gen();
 %}
 
-%token INT8 INT10 INT16 ID
+%union{
+	char *c;
+	long int i;
+	struct node * n;
+}
+
+%token <i> INT8
+%token <i> INT10
+%token <i> INT16
+%token <c> ID
 %token IF ELSE THEN WHILE DO
 
-%define parse.trace
+%type <n> p
+%type <n> l
+%type <n> s
+%type <n> c
+%type <n> t
+%type <n> f
 
+%right '='
+%left '+' '-'
+%left '*' '/'
+
+%define parse.trace
+%initial-action
+{
+	place_counter = 0;
+}
 %% /* The grammar follows.  */
 
-p:l  { printf (" p reduced from l -->"); }
-|l p { printf (" p reduced from l p -->"); }
+p:l  {  }
+|l p {  }
 ;
 
-l:s			{ printf (" l reduced from s -->"); }
+l:s ';'			{  }
 ;
 
-s:ID '=' e						{ printf (" s reduced from ID=e -->"); }
-|'{' p '}'						{ printf (" s reduced from {P}  -->"); }
-|IF c THEN s 					{ printf (" s reduced from if then -->"); }
-|IF c THEN s ELSE s		{ printf (" s reduced from if then else-->"); }
-|WHILE c DO s					{ printf (" s reduced from while do -->"); }
-|s ';'
+s:ID '=' t  					{  }
+|'{' p '}'						{  }
+|IF c THEN s 					{ printf("if s goto true\n"); printf("goto next\n");}
+|IF c THEN s ELSE s		{ printf("if s goto ture\n"); printf("goto else\n"); }
+|WHILE c DO s					{  }
 ;
 
-c:e '>' e			{ printf (" c reduced from e>e -->"); }
-|e '<' e			{ printf (" c reduced from e<e -->"); }
-|e '=' e			{ printf (" c reduced from e=e -->"); }
-|c ';'				{}
+c:t '>' t			{  }
+|t '<' t			{  }
+|t '=' t			{  }
 ;
 
-e:t           { printf (" e reduced from t -->"); }
-|e '+' t			{ printf (" e reduced from e+t -->"); }
-|e '-' t			{ printf (" e reduced from e-t -->"); }
+t:f					{ $$=node_gen(); $$->place = $1->place; $$->code = $1->code; }
+|t '*' t		{ $$=node_gen(); $$->place = place_gen(); $$->code = calc_gen($$->place, $1->place,$3->place,'*'); printf("%s\n",$$->code); }
+|t '/' t		{ $$=node_gen(); $$->place = place_gen(); $$->code = calc_gen($$->place, $1->place,$3->place,'/'); printf("%s\n",$$->code); }
+|t '+' t		{ $$=node_gen(); $$->place = place_gen(); $$->code = calc_gen($$->place, $1->place,$3->place,'+'); printf("%s\n",$$->code); }
+|t '-' t		{ $$=node_gen(); $$->place = place_gen(); $$->code = calc_gen($$->place, $1->place,$3->place,'-'); printf("%s\n",$$->code); }
 ;
 
-t:f					{ printf (" t reduced from f -->"); }
-|t '*' f			{ printf (" t reduced from t*f -->"); }
-|t '/' f			{ printf (" t reduced from t/f -->"); }
+f:'(' t ')' { $$=node_gen(); $$->place = $2->place; $$->code = $2->code; }
+|ID					{ $$=node_gen(); $$->place = $1;}
+|INT8				{ $$=node_gen(); sprintf($$->place, "%d", (int)$1); }
+|INT10			{ $$=node_gen(); sprintf($$->place, "%d", (int)$1); }
+|INT16			{ $$=node_gen(); sprintf($$->place, "%d", (int)$1); }
 ;
-
-f:'(' e ')' { printf (" f reduced from (e) -->"); }
-|ID					{ printf (" f reduced from ID -->"); }
-|INT8				{ printf (" f reduced from INT8 -->"); }
-|INT10			{ printf (" f reduced from INT10 -->"); }
-|INT16			{ printf (" f reduced from INT16 -->"); }
-;
-
 
 %%
 
 int
-main (void)
+main (int argc,char* argv[])
 {
+	if(argc>1)
+	{
+		if(!(yyin = fopen(argv[1], "r"))) 
+		{
+			perror(argv[1]);
+			return (1);
+		}
+	}
 	yydebug = 1;
   return yyparse ();
 }
@@ -69,3 +105,35 @@ yyerror (char const *s)
 {
   fprintf (stderr, "%s\n", s);
 }
+
+char* 
+place_gen()
+{
+	char *t = malloc(20*sizeof(char));
+	char *current_index = malloc(20*sizeof(char));
+	sprintf(current_index, "%d", place_counter++);
+	strcat(t,"t");
+	strcat(t,current_index);
+	return t;
+}
+
+char* 
+calc_gen(char* place, char* a, char* b, char item)
+{
+	char *t = malloc(100*sizeof(char));
+	strcat(t,place);
+	strcat(t,"=");
+	strcat(t,a);
+	strcat(t,&item);
+	strcat(t,b);
+	return t;
+}
+
+struct node*
+node_gen(){
+	struct node* temp = malloc(sizeof(struct node));
+	temp->code = malloc(200*sizeof(char));
+	temp->place = malloc(10*sizeof(char));
+	return temp;
+}
+
