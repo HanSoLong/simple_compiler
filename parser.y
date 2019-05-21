@@ -76,7 +76,7 @@ t:f					{ $$=node_gen(); $$->place = $1->place; $$->code = $1->code; }
 ;
 
 f:'(' t ')' { $$=node_gen(); $$->place = $2->place; $$->code = $2->code; }
-|ID					{ $$=node_gen(); $$->place = $1;}
+|ID					{ $$=node_gen(); $$->place = $1; }
 |INT8				{ $$=node_gen(); sprintf($$->place, "%d", (int)$1); }
 |INT10			{ $$=node_gen(); sprintf($$->place, "%d", (int)$1); }
 |INT16			{ $$=node_gen(); sprintf($$->place, "%d", (int)$1); }
@@ -95,7 +95,7 @@ main (int argc,char* argv[])
 			return (1);
 		}
 	}
-	yydebug = 1;
+	yydebug = 0;
   return yyparse ();
 }
 
@@ -109,8 +109,8 @@ yyerror (char const *s)
 char* 
 place_gen()
 {
-	char *t = malloc(20*sizeof(char));
-	char *current_index = malloc(20*sizeof(char));
+	char *t = (char*)malloc(20*sizeof(char));
+	char *current_index = (char*)malloc(20*sizeof(char));
 	sprintf(current_index, "%d", place_counter++);
 	strcat(t,"t");
 	strcat(t,current_index);
@@ -120,7 +120,7 @@ place_gen()
 char* 
 calc_gen(char* place, char* a, char* b, char item)
 {
-	char *t = malloc(100*sizeof(char));
+	char *t = (char*)malloc((strlen(place)+strlen(a)+strlen(a)+strlen(&item)+strlen("=")+2)*sizeof(char));
 	strcat(t,place);
 	strcat(t,"=");
 	strcat(t,a);
@@ -132,8 +132,8 @@ calc_gen(char* place, char* a, char* b, char item)
 struct node*
 node_gen(){
 	struct node* temp = malloc(sizeof(struct node));
-	temp->code = malloc(200*sizeof(char));
-	temp->place = malloc(10*sizeof(char));
+	temp->code = (char*)malloc(200*sizeof(char));
+	temp->place = (char*)malloc(200*sizeof(char));
 	return temp;
 }
 

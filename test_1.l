@@ -3,6 +3,7 @@
 #include "parser.tab.h"
 #include <string.h>
 #include <stdlib.h>
+char* copy_ID_name(char* text);
 %}
 %%
 
@@ -15,7 +16,7 @@
 "else" {return ELSE; }
 "while" {return WHILE; }
 "do" {return DO; }
-[a-zA-Z]+[a-zA-Z0-9_]*  {yylval.c = yytext;return ID;}
+[a-zA-Z]+[a-zA-Z0-9_]*  {yylval.c = copy_ID_name(yytext);return ID;}
 "+" {return '+';}
 "-" {return '-';}
 "*" {return '*';}
@@ -36,4 +37,15 @@
 . {}
 
 %%
-
+char* 
+copy_ID_name(char* text)
+{
+	char*temp = malloc((strlen(yytext)+1)*sizeof(char));
+	int i = 0;
+	for(i=0;i<strlen(yytext);i++)
+	{
+		temp[i] = yytext[i];
+	}
+	strcat(temp,"");
+	return temp;
+}

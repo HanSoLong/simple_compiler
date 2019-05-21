@@ -607,7 +607,8 @@ char *yytext;
 #include "parser.tab.h"
 #include <string.h>
 #include <stdlib.h>
-#line 611 "lex.yy.c"
+char* copy_ID_name(char* text);
+#line 612 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -825,10 +826,10 @@ YY_DECL
 		}
 
 	{
-#line 7 "test_1.l"
+#line 8 "test_1.l"
 
 
-#line 832 "lex.yy.c"
+#line 833 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -887,140 +888,140 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 9 "test_1.l"
+#line 10 "test_1.l"
 {return 1111; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 10 "test_1.l"
+#line 11 "test_1.l"
 {yylval.i = strtol(yytext,NULL,0);return INT16;}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 11 "test_1.l"
+#line 12 "test_1.l"
 {return 1111; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 12 "test_1.l"
+#line 13 "test_1.l"
 {return 1111; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 13 "test_1.l"
+#line 14 "test_1.l"
 {return IF; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 14 "test_1.l"
+#line 15 "test_1.l"
 {return THEN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 15 "test_1.l"
+#line 16 "test_1.l"
 {return ELSE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 16 "test_1.l"
+#line 17 "test_1.l"
 {return WHILE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 17 "test_1.l"
+#line 18 "test_1.l"
 {return DO; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 18 "test_1.l"
-{yylval.c = yytext;return ID;}
+#line 19 "test_1.l"
+{yylval.c = copy_ID_name(yytext);return ID;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 19 "test_1.l"
+#line 20 "test_1.l"
 {return '+';}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 20 "test_1.l"
+#line 21 "test_1.l"
 {return '-';}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 21 "test_1.l"
+#line 22 "test_1.l"
 {return '*';}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 22 "test_1.l"
+#line 23 "test_1.l"
 {return '/';}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 23 "test_1.l"
+#line 24 "test_1.l"
 {return '>';}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 24 "test_1.l"
+#line 25 "test_1.l"
 {return '<';}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 25 "test_1.l"
+#line 26 "test_1.l"
 {return '=';}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 26 "test_1.l"
+#line 27 "test_1.l"
 {return '(';}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 27 "test_1.l"
+#line 28 "test_1.l"
 {return ')';}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 28 "test_1.l"
+#line 29 "test_1.l"
 {return ';';}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 29 "test_1.l"
+#line 30 "test_1.l"
 {return '{';}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 30 "test_1.l"
+#line 31 "test_1.l"
 {return '}';}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 33 "test_1.l"
+#line 34 "test_1.l"
 {yylval.i = strtol(yytext,NULL,0);return INT10;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 34 "test_1.l"
+#line 35 "test_1.l"
 {yylval.i = strtol(yytext,NULL,0);return INT8;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 35 "test_1.l"
+#line 36 "test_1.l"
 {}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 36 "test_1.l"
+#line 37 "test_1.l"
 {}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 38 "test_1.l"
+#line 39 "test_1.l"
 ECHO;
 	YY_BREAK
-#line 1024 "lex.yy.c"
+#line 1025 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2021,8 +2022,19 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 38 "test_1.l"
+#line 39 "test_1.l"
 
 
-
+char* 
+copy_ID_name(char* text)
+{
+	char*temp = malloc((strlen(yytext)+1)*sizeof(char));
+	int i = 0;
+	for(i=0;i<strlen(yytext);i++)
+	{
+		temp[i] = yytext[i];
+	}
+	strcat(temp,"");
+	return temp;
+}
 
