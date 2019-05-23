@@ -140,6 +140,7 @@ c:t '>' t			{ $$=node_gen();
 								$$->true_fill = init_back_fill_list(int_program->current_line);
 								compare_gen(int_program,$1->place,$3->place,'=');	
  							}
+|error 			{	yyerrok; printf("error in reducing comparsion\n"); }							 
 ;
 
 t:f					{ $$=node_gen(); $$->place = $1->place; }
