@@ -62,26 +62,52 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 3 "parser.y" /* yacc.c:339  */
+#line 1 "parser.y" /* yacc.c:339  */
 
 	#include <ctype.h>
 	#include <stdio.h>
 	#include<string.h>
-	#include<stdlib.h>
+  #include<stdlib.h>
 	#define YYDEBUG 1
+
 	int place_counter;
-  int yylex();
+
+	int yylex();
   void yyerror(const char *s);
   extern FILE* yyin;
-  struct node{
-  	char *code;
-  	char *place;
-  };
-  char* place_gen();
-  char* calc_gen(char* place, char* a, char* b, char item);
-	struct node* node_gen();
 
-#line 85 "parser.tab.c" /* yacc.c:339  */
+	typedef struct codeTable{
+		char **code_list;
+		int current_line;
+	}codeTable;
+
+	typedef struct backFillNode{
+		int fill_line_number;
+		struct backFillNode *next;
+	}backFillNode;
+
+	struct node{
+  	char *place;
+		int line_number;
+		backFillNode *true_fill, *false_fill, *next_fill;
+  };
+
+	struct node* node_gen();
+	void print_code(codeTable* program);
+	codeTable* int_program;
+		
+  char* place_gen();
+  void calc_gen(codeTable* program, char* place, char* a, char* b, char item);
+	void append_code(codeTable* program, char* code);
+	void assign_gen(codeTable* program, char* place1, char* place2);
+	void fillback(codeTable* program, backFillNode* node, int destiny);
+	backFillNode* init_back_fill_list(int position);
+	void compare_gen(codeTable* program, char* place1, char* place2, char compare_symbol);
+	codeTable* init_code_table();
+	backFillNode* append_next_list_with_false_list(backFillNode* false_list, backFillNode* next_list);
+	void goto_gen(codeTable* program, int destiny);
+
+#line 111 "parser.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -133,13 +159,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 22 "parser.y" /* yacc.c:355  */
+#line 46 "parser.y" /* yacc.c:355  */
 
 	char *c;
 	long int i;
 	struct node * n;
 
-#line 143 "parser.tab.c" /* yacc.c:355  */
+#line 169 "parser.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -156,7 +182,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 160 "parser.tab.c" /* yacc.c:358  */
+#line 186 "parser.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -398,16 +424,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  19
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   51
+#define YYLAST   58
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  24
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  7
+#define YYNNTS  8
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  22
+#define YYNRULES  23
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  46
+#define YYNSTATES  51
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -454,9 +480,9 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    52,    52,    53,    56,    59,    60,    61,    62,    63,
-      66,    67,    68,    71,    72,    73,    74,    75,    78,    79,
-      80,    81,    82
+       0,    79,    79,    80,    83,    86,    89,    90,    96,   101,
+     112,   117,   122,   127,   134,   135,   136,   137,   138,   141,
+     142,   143,   144,   145
 };
 #endif
 
@@ -467,8 +493,8 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "INT8", "INT10", "INT16", "ID", "IF",
   "ELSE", "THEN", "WHILE", "DO", "'='", "'+'", "'-'", "'*'", "'/'", "';'",
-  "'{'", "'}'", "'>'", "'<'", "'('", "')'", "$accept", "p", "l", "s", "c",
-  "t", "f", YY_NULLPTR
+  "'{'", "'}'", "'>'", "'<'", "'('", "')'", "$accept", "p", "l", "s",
+  "line_indicator", "c", "t", "f", YY_NULLPTR
 };
 #endif
 
@@ -483,10 +509,10 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF -21
+#define YYPACT_NINF -31
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-21)))
+  (!!((Yystate) == (-31)))
 
 #define YYTABLE_NINF -1
 
@@ -497,11 +523,12 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      20,   -10,     3,     3,    20,    28,    20,    12,     3,   -21,
-     -21,   -21,   -21,     3,    26,    30,   -21,    25,    21,   -21,
-     -21,   -21,     0,    18,    20,     3,     3,     3,     3,     3,
-       3,     3,    20,   -21,   -21,    29,     0,    -5,    -5,   -21,
-     -21,     0,     0,   -21,    20,   -21
+       7,    -3,    -2,   -31,     7,    11,   -31,    -5,    -2,   -31,
+     -31,   -31,   -31,    -2,    13,    33,   -31,    -2,     4,   -31,
+       7,   -31,    42,    21,   -31,    -2,    -2,    -2,    -2,    -2,
+      -2,    -2,   -31,   -31,   -31,   -31,     7,    42,    -8,    -8,
+     -31,   -31,    42,    42,    27,    16,     7,   -31,   -31,     7,
+     -31
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -509,23 +536,24 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     0,     0,     2,     0,     0,    20,
-      21,    22,    19,     0,     0,     0,    13,     0,     0,     1,
-       3,     4,     5,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     6,    18,     7,    12,    16,    17,    14,
-      15,    10,    11,     9,     0,     8
+       0,     0,     0,    10,     0,     0,    10,     0,     0,    21,
+      22,    23,    20,     0,     0,     0,    14,     0,     0,     1,
+       2,     4,     5,     0,    10,     0,     0,     0,     0,     0,
+       0,     0,    10,     6,     3,    19,     0,    13,    17,    18,
+      15,    16,    11,    12,     0,     7,     0,    10,     9,     0,
+       8
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -21,    -3,   -21,   -20,    36,    -8,   -21
+     -31,     1,   -31,   -30,    -6,    22,     2,   -31
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     5,     6,     7,    14,    15,    16
+      -1,     5,     6,     7,    17,    14,    15,    16
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -533,22 +561,22 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      22,    18,     8,    20,    35,    23,     9,    10,    11,    12,
-      28,    29,    43,    26,    27,    28,    29,    36,    37,    38,
-      39,    40,    41,    42,    45,    13,     1,     2,    19,    21,
-       3,    26,    27,    28,    29,    24,    32,    44,     4,    17,
-      33,    34,    25,    26,    27,    28,    29,     0,     0,     0,
-      30,    31
+      20,     9,    10,    11,    12,    18,    45,    28,    29,     8,
+      22,    19,    21,     1,     2,    23,    48,     3,    36,    50,
+      13,    34,    24,    33,    47,     4,    44,    37,    38,    39,
+      40,    41,    42,    43,    26,    27,    28,    29,    46,    32,
+       0,    49,     0,     0,    35,    25,    26,    27,    28,    29,
+       0,     0,     0,    30,    31,    26,    27,    28,    29
 };
 
 static const yytype_int8 yycheck[] =
 {
-       8,     4,    12,     6,    24,    13,     3,     4,     5,     6,
-      15,    16,    32,    13,    14,    15,    16,    25,    26,    27,
-      28,    29,    30,    31,    44,    22,     6,     7,     0,    17,
-      10,    13,    14,    15,    16,     9,    11,     8,    18,     3,
-      19,    23,    12,    13,    14,    15,    16,    -1,    -1,    -1,
-      20,    21
+       6,     3,     4,     5,     6,     4,    36,    15,    16,    12,
+       8,     0,    17,     6,     7,    13,    46,    10,    24,    49,
+      22,    20,     9,    19,     8,    18,    32,    25,    26,    27,
+      28,    29,    30,    31,    13,    14,    15,    16,    11,    17,
+      -1,    47,    -1,    -1,    23,    12,    13,    14,    15,    16,
+      -1,    -1,    -1,    20,    21,    13,    14,    15,    16
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -556,26 +584,27 @@ static const yytype_int8 yycheck[] =
 static const yytype_uint8 yystos[] =
 {
        0,     6,     7,    10,    18,    25,    26,    27,    12,     3,
-       4,     5,     6,    22,    28,    29,    30,    28,    25,     0,
-      25,    17,    29,    29,     9,    12,    13,    14,    15,    16,
-      20,    21,    11,    19,    23,    27,    29,    29,    29,    29,
-      29,    29,    29,    27,     8,    27
+       4,     5,     6,    22,    29,    30,    31,    28,    25,     0,
+      28,    17,    30,    30,     9,    12,    13,    14,    15,    16,
+      20,    21,    29,    19,    25,    23,    28,    30,    30,    30,
+      30,    30,    30,    30,    28,    27,    11,     8,    27,    28,
+      27
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
        0,    24,    25,    25,    26,    27,    27,    27,    27,    27,
-      28,    28,    28,    29,    29,    29,    29,    29,    30,    30,
-      30,    30,    30
+      28,    29,    29,    29,    30,    30,    30,    30,    30,    31,
+      31,    31,    31,    31
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     2,     2,     3,     3,     4,     6,     4,
-       3,     3,     3,     1,     3,     3,     3,     3,     3,     1,
-       1,     1,     1
+       0,     2,     2,     3,     2,     3,     3,     5,     8,     6,
+       0,     3,     3,     3,     1,     3,     3,     3,     3,     3,
+       1,     1,     1,     1
 };
 
 
@@ -1075,12 +1104,13 @@ yyparse (void)
   yychar = YYEMPTY; /* Cause a token to be read.  */
 
 /* User initialization code.  */
-#line 47 "parser.y" /* yacc.c:1429  */
+#line 72 "parser.y" /* yacc.c:1429  */
 {
 	place_counter = 0;
+	int_program = init_code_table();
 }
 
-#line 1084 "parser.tab.c" /* yacc.c:1429  */
+#line 1114 "parser.tab.c" /* yacc.c:1429  */
   goto yysetstate;
 
 /*------------------------------------------------------------.
@@ -1260,133 +1290,169 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 52 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1266 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 3:
-#line 53 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1272 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 4:
-#line 56 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1278 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 5:
-#line 59 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1284 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 6:
-#line 60 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1290 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 7:
-#line 61 "parser.y" /* yacc.c:1646  */
-    { printf("if s goto true\n"); printf("goto next\n");}
+#line 79 "parser.y" /* yacc.c:1646  */
+    { fillback(int_program, (yyvsp[-1].n)->next_fill, (yyvsp[0].n)->line_number); }
 #line 1296 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 8:
-#line 62 "parser.y" /* yacc.c:1646  */
-    { printf("if s goto ture\n"); printf("goto else\n"); }
+  case 3:
+#line 80 "parser.y" /* yacc.c:1646  */
+    { fillback(int_program, (yyvsp[-2].n)->next_fill, (yyvsp[-1].n)->line_number); }
 #line 1302 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 9:
-#line 63 "parser.y" /* yacc.c:1646  */
+  case 4:
+#line 83 "parser.y" /* yacc.c:1646  */
     {  }
 #line 1308 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 10:
-#line 66 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1314 "parser.tab.c" /* yacc.c:1646  */
+  case 5:
+#line 86 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); 
+												assign_gen(int_program, (yyvsp[-2].c), (yyvsp[0].n)->place);
+											}
+#line 1316 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 11:
-#line 67 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1320 "parser.tab.c" /* yacc.c:1646  */
+  case 6:
+#line 89 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)->place = (yyvsp[-1].n)->place; }
+#line 1322 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 12:
-#line 68 "parser.y" /* yacc.c:1646  */
-    {  }
-#line 1326 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 13:
-#line 71 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = (yyvsp[0].n)->place; (yyval.n)->code = (yyvsp[0].n)->code; }
+  case 7:
+#line 91 "parser.y" /* yacc.c:1646  */
+    { 
+												(yyval.n)=node_gen();
+												fillback(int_program, (yyvsp[-3].n)->true_fill, (yyvsp[-1].n)->line_number); 
+												(yyval.n)->next_fill = append_next_list_with_false_list((yyvsp[-3].n)->false_fill,(yyvsp[0].n)->next_fill); 
+											}
 #line 1332 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 14:
-#line 72 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); (yyval.n)->code = calc_gen((yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'*'); printf("%s\n",(yyval.n)->code); }
-#line 1338 "parser.tab.c" /* yacc.c:1646  */
+  case 8:
+#line 97 "parser.y" /* yacc.c:1646  */
+    { 
+												fillback(int_program, (yyvsp[-6].n)->true_fill, (yyvsp[-4].n)->line_number);
+												fillback(int_program, (yyvsp[-6].n)->false_fill, (yyvsp[-1].n)->line_number); 
+											}
+#line 1341 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 15:
-#line 73 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); (yyval.n)->code = calc_gen((yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'/'); printf("%s\n",(yyval.n)->code); }
-#line 1344 "parser.tab.c" /* yacc.c:1646  */
+  case 9:
+#line 102 "parser.y" /* yacc.c:1646  */
+    { 
+												(yyval.n)=node_gen();
+												fillback(int_program, (yyvsp[0].n)->next_fill, (yyvsp[-4].n)->line_number);
+												fillback(int_program, (yyvsp[-3].n)->true_fill, (yyvsp[-2].n)->line_number);
+												(yyval.n)->next_fill = (yyvsp[-3].n)->false_fill;
+												goto_gen(int_program,(yyvsp[-4].n)->line_number);
+											}
+#line 1353 "parser.tab.c" /* yacc.c:1646  */
     break;
 
-  case 16:
-#line 74 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); (yyval.n)->code = calc_gen((yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'+'); printf("%s\n",(yyval.n)->code); }
-#line 1350 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 17:
-#line 75 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); (yyval.n)->code = calc_gen((yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'-'); printf("%s\n",(yyval.n)->code); }
-#line 1356 "parser.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 18:
-#line 78 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = (yyvsp[-1].n)->place; (yyval.n)->code = (yyvsp[-1].n)->code; }
+  case 10:
+#line 112 "parser.y" /* yacc.c:1646  */
+    {
+		(yyval.n) = node_gen();
+		(yyval.n)->line_number = int_program->current_line;
+	}
 #line 1362 "parser.tab.c" /* yacc.c:1646  */
     break;
 
+  case 11:
+#line 117 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen();
+								(yyval.n)->true_fill = init_back_fill_list(int_program->current_line);
+								(yyval.n)->false_fill = init_back_fill_list(int_program->current_line + 1);
+								compare_gen(int_program,(yyvsp[-2].n)->place,(yyvsp[0].n)->place,'>');						  							  
+							}
+#line 1372 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 12:
+#line 122 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen();
+								(yyval.n)->true_fill = init_back_fill_list(int_program->current_line);
+								(yyval.n)->false_fill = init_back_fill_list(int_program->current_line + 1);
+								compare_gen(int_program,(yyvsp[-2].n)->place,(yyvsp[0].n)->place,'<');	
+							}
+#line 1382 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 13:
+#line 127 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen();
+								(yyval.n)->true_fill = init_back_fill_list(int_program->current_line);
+								(yyval.n)->false_fill = init_back_fill_list(int_program->current_line + 1);
+								compare_gen(int_program,(yyvsp[-2].n)->place,(yyvsp[0].n)->place,'=');	
+ 							}
+#line 1392 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 14:
+#line 134 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = (yyvsp[0].n)->place; }
+#line 1398 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 15:
+#line 135 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); calc_gen(int_program,(yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'*'); }
+#line 1404 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 16:
+#line 136 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); calc_gen(int_program,(yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'/'); }
+#line 1410 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 17:
+#line 137 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); calc_gen(int_program,(yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'+'); }
+#line 1416 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 18:
+#line 138 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = place_gen(); calc_gen(int_program,(yyval.n)->place, (yyvsp[-2].n)->place,(yyvsp[0].n)->place,'-'); }
+#line 1422 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
   case 19:
-#line 79 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); (yyval.n)->place = (yyvsp[0].c); }
-#line 1368 "parser.tab.c" /* yacc.c:1646  */
+#line 141 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = (yyvsp[-1].n)->place;}
+#line 1428 "parser.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 80 "parser.y" /* yacc.c:1646  */
-    { (yyval.n)=node_gen(); sprintf((yyval.n)->place, "%d", (int)(yyvsp[0].i)); }
-#line 1374 "parser.tab.c" /* yacc.c:1646  */
+#line 142 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); (yyval.n)->place = (yyvsp[0].c); }
+#line 1434 "parser.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 81 "parser.y" /* yacc.c:1646  */
+#line 143 "parser.y" /* yacc.c:1646  */
     { (yyval.n)=node_gen(); sprintf((yyval.n)->place, "%d", (int)(yyvsp[0].i)); }
-#line 1380 "parser.tab.c" /* yacc.c:1646  */
+#line 1440 "parser.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 82 "parser.y" /* yacc.c:1646  */
+#line 144 "parser.y" /* yacc.c:1646  */
     { (yyval.n)=node_gen(); sprintf((yyval.n)->place, "%d", (int)(yyvsp[0].i)); }
-#line 1386 "parser.tab.c" /* yacc.c:1646  */
+#line 1446 "parser.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 23:
+#line 145 "parser.y" /* yacc.c:1646  */
+    { (yyval.n)=node_gen(); sprintf((yyval.n)->place, "%d", (int)(yyvsp[0].i)); }
+#line 1452 "parser.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1390 "parser.tab.c" /* yacc.c:1646  */
+#line 1456 "parser.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1614,7 +1680,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 85 "parser.y" /* yacc.c:1906  */
+#line 148 "parser.y" /* yacc.c:1906  */
 
 
 int
@@ -1629,10 +1695,13 @@ main (int argc,char* argv[])
 		}
 	}
 	yydebug = 0;
-  return yyparse ();
+  yyparse();
+	print_code(int_program);
+	return 0;
 }
 
 /* Called by yyparse on error.  */
+
 void
 yyerror (char const *s)
 {
@@ -1642,6 +1711,7 @@ yyerror (char const *s)
 char* 
 place_gen()
 {
+	
 	char *t = (char*)malloc(20*sizeof(char));
 	char *current_index = (char*)malloc(20*sizeof(char));
 	sprintf(current_index, "%d", place_counter++);
@@ -1650,23 +1720,123 @@ place_gen()
 	return t;
 }
 
-char* 
-calc_gen(char* place, char* a, char* b, char item)
+void 
+calc_gen(codeTable* program, char* place, char* a, char* b, char item)
 {
-	char *t = (char*)malloc((strlen(place)+strlen(a)+strlen(a)+strlen(&item)+strlen("=")+2)*sizeof(char));
+	char *t = (char*)malloc((strlen(place)+strlen(a)+strlen(a)+strlen(&item)+strlen("=")+20)*sizeof(char));
 	strcat(t,place);
 	strcat(t,"=");
 	strcat(t,a);
 	strcat(t,&item);
 	strcat(t,b);
-	return t;
+	append_code(program,t);
+}
+
+void
+compare_gen(codeTable* program, char* place1, char* place2, char compare_symbol)
+{
+	char temp[200];
+	sprintf(temp, "if %s %c %s goto:", place1, compare_symbol, place2);
+	append_code(program, temp);
+	char temp1[200];
+	sprintf(temp1, "goto:");
+	append_code(program, temp1);
+}
+
+void
+goto_gen(codeTable* program, int destiny)
+{
+	char* temp = malloc(200*sizeof(char));
+	if(destiny >= 0)
+	{
+		sprintf(temp, "goto: %d", destiny);
+	}
+	else
+	{
+		sprintf(temp, "goto");
+	}
+	append_code(program,temp);
+}
+
+void
+assign_gen(codeTable* program, char* place1, char* place2)
+{
+	char* temp = malloc(200*sizeof(char));
+	sprintf(temp, "%s = %s", place1, place2);
+	append_code(program,temp);
 }
 
 struct node*
-node_gen(){
-	struct node* temp = malloc(sizeof(struct node));
-	temp->code = (char*)malloc(200*sizeof(char));
+node_gen()
+{
+	struct node* temp = (struct node*)malloc(200*sizeof(char));;
 	temp->place = (char*)malloc(200*sizeof(char));
+	temp->line_number = int_program->current_line;
+	temp->true_fill = NULL;
+	temp->false_fill = NULL;
+	temp->next_fill = NULL;
 	return temp;
 }
 
+codeTable*
+init_code_table()
+{
+	codeTable* temp = (codeTable*)malloc(sizeof(codeTable));
+	temp->current_line = 0;
+	temp->code_list = (char**)malloc(100*sizeof(char*));
+	return temp;
+}
+
+backFillNode*
+init_back_fill_list(int position)
+{
+	backFillNode* head = (backFillNode*)malloc(sizeof(backFillNode));
+	head->fill_line_number = position;
+	head->next = NULL;
+	return head;
+}
+
+void 
+append_code(codeTable* program, char* code)
+{
+	program->code_list[program->current_line] = malloc(sizeof(code)+20);
+	strcpy(program->code_list[program->current_line],code);
+	program->current_line++;
+}
+
+void 
+fillback(codeTable* program, backFillNode* node, int destiny)
+{
+	if(node != NULL)
+	{
+		backFillNode* temp = node;
+		char line[30];
+		sprintf(line, " %d", destiny);
+		while(temp != NULL)
+		{
+			if(temp->fill_line_number < program->current_line)
+			{
+				strcat(program->code_list[temp->fill_line_number], line);
+			}
+			temp = temp->next;
+		}
+	}
+}
+
+void
+print_code(codeTable* program){
+	int i = 0;
+	for (i = 0; i < program->current_line; i++)
+		printf("%2d: %s\n", i, program->code_list[i]);
+}
+
+backFillNode*
+append_next_list_with_false_list(backFillNode* false_list, backFillNode* next_list)
+{
+	backFillNode* temp = NULL;
+	if(next_list != NULL){
+		false_list->next = next_list;
+	}
+	temp = false_list;
+	return temp;
+}
