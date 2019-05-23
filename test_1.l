@@ -1,4 +1,5 @@
 %option noyywrap
+%option yylineno
 %{
 #include "parser.tab.h"
 #include <string.h>
@@ -16,6 +17,7 @@ char* copy_ID_name(char* text);
 "else" {return ELSE; }
 "while" {return WHILE; }
 "do" {return DO; }
+"interrupt" {return 0;}
 [a-zA-Z]+[a-zA-Z0-9_]*  {yylval.c = copy_ID_name(yytext);return ID;}
 "+" {return '+';}
 "-" {return '-';}
@@ -29,7 +31,7 @@ char* copy_ID_name(char* text);
 ";" {return ';';}
 "{" {return '{';}
 "}" {return '}';}
-
+\n { }
 
 0|([1-9]+[0-9]*) {yylval.i = strtol(yytext,NULL,0);return INT10;}
 0[1-7]+[0-7]* {yylval.i = strtol(yytext,NULL,0);return INT8;}

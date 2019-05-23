@@ -6,11 +6,11 @@
 	#define YYDEBUG 1
 
 	int place_counter;
-
+	int error_exists;
 	int yylex();
   void yyerror(const char *s);
   extern FILE* yyin;
-
+	extern yylineno;
 	typedef struct codeTable{
 		char **code_list;
 		int current_line;
@@ -64,8 +64,6 @@
 %type <n> line_indicator
 %type <n> goto_generator
 
-%precedence THEN
-%precedence ELSE
 %right '='
 %left '+' '-'
 %left '*' '/'
@@ -74,6 +72,8 @@
 %initial-action
 {
 	place_counter = 0;
+	yylineno = 1;
+	error_exists = 0;
 	int_program = init_code_table();
 }
 
@@ -97,12 +97,12 @@ s:ID '=' t  					{ $$=node_gen();
 												fillback(int_program, $2->true_fill, $5->line_number); 
 												$$->next_fill = append_next_list_with_false_list($3->false_fill,$6->next_fill); 
 											}
-|IF c goto_generator THEN line_indicator s ELSE goto_generator line_indicator s		
+|IF c goto_generator THEN line_indicator s goto_generator ELSE line_indicator s		
 											{ 
 												$$=node_gen();
 												fillback(int_program, $2->true_fill, $5->line_number);
 												fillback(int_program, $3->false_fill, $10->line_number);
-												$$->next_fill = $8->false_fill;
+												$$->next_fill = $7->false_fill;
 											}
 |WHILE line_indicator c goto_generator line_indicator DO s					
 											{ 
@@ -171,7 +171,10 @@ main (int argc,char* argv[])
 	}
 	yydebug = 0;
   yyparse();
-	print_code(int_program);
+	if(error_exists==0)
+	{
+		print_code(int_program);
+	}
 	return 0;
 }
 
@@ -180,7 +183,8 @@ main (int argc,char* argv[])
 void
 yyerror (char const *s)
 {
-  fprintf (stderr, "%s\n", s);
+  fprintf (stderr, "%s in line %d\n", s, yylineno);
+	error_exists = 1;
 }
 
 char* 
