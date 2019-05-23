@@ -62,7 +62,10 @@
 %type <n> t
 %type <n> f
 %type <n> line_indicator
+%type <n> goto_generator
 
+%precedence THEN
+%precedence ELSE
 %right '='
 %left '+' '-'
 %left '*' '/'
@@ -86,24 +89,27 @@ l:s ';'			{  }
 s:ID '=' t  					{ $$=node_gen(); 
 												assign_gen(int_program, $1, $3->place);
 											}
-|'{' p '}'						{ $$->place = $2->place; }
-|IF c THEN line_indicator s 					
+|'{' p '}'						{ $$=node_gen();
+												$$->place = $2->place; }
+|IF c goto_generator THEN line_indicator s 					
 											{ 
 												$$=node_gen();
-												fillback(int_program, $2->true_fill, $4->line_number); 
-												$$->next_fill = append_next_list_with_false_list($2->false_fill,$5->next_fill); 
+												fillback(int_program, $2->true_fill, $5->line_number); 
+												$$->next_fill = append_next_list_with_false_list($3->false_fill,$6->next_fill); 
 											}
-|IF c THEN line_indicator s ELSE line_indicator s		
-											{ 
-												fillback(int_program, $2->true_fill, $4->line_number);
-												fillback(int_program, $2->false_fill, $7->line_number); 
-											}
-|WHILE line_indicator c line_indicator DO s					
+|IF c goto_generator THEN line_indicator s ELSE goto_generator line_indicator s		
 											{ 
 												$$=node_gen();
-												fillback(int_program, $6->next_fill, $2->line_number);
-												fillback(int_program, $3->true_fill, $4->line_number);
-												$$->next_fill = $3->false_fill;
+												fillback(int_program, $2->true_fill, $5->line_number);
+												fillback(int_program, $3->false_fill, $10->line_number);
+												$$->next_fill = $8->false_fill;
+											}
+|WHILE line_indicator c goto_generator line_indicator DO s					
+											{ 
+												$$=node_gen();
+												fillback(int_program, $7->next_fill, $2->line_number);
+												fillback(int_program, $3->true_fill, $5->line_number);
+												$$->next_fill = $4->false_fill;
 												goto_gen(int_program,$2->line_number);
 											}
 ;
@@ -113,20 +119,25 @@ line_indicator:
 		$$ = node_gen();
 		$$->line_number = int_program->current_line;
 	}
+;
 
+goto_generator:
+	{
+		$$=node_gen();
+		$$->false_fill = init_back_fill_list(int_program->current_line);
+		goto_gen(int_program, -1);
+	}
+;
 c:t '>' t			{ $$=node_gen();
 								$$->true_fill = init_back_fill_list(int_program->current_line);
-								$$->false_fill = init_back_fill_list(int_program->current_line + 1);
 								compare_gen(int_program,$1->place,$3->place,'>');						  							  
 							}
 |t '<' t			{ $$=node_gen();
 								$$->true_fill = init_back_fill_list(int_program->current_line);
-								$$->false_fill = init_back_fill_list(int_program->current_line + 1);
 								compare_gen(int_program,$1->place,$3->place,'<');	
 							}
 |t '=' t			{ $$=node_gen();
 								$$->true_fill = init_back_fill_list(int_program->current_line);
-								$$->false_fill = init_back_fill_list(int_program->current_line + 1);
 								compare_gen(int_program,$1->place,$3->place,'=');	
  							}
 ;
@@ -202,9 +213,6 @@ compare_gen(codeTable* program, char* place1, char* place2, char compare_symbol)
 	char temp[200];
 	sprintf(temp, "if %s %c %s goto:", place1, compare_symbol, place2);
 	append_code(program, temp);
-	char temp1[200];
-	sprintf(temp1, "goto:");
-	append_code(program, temp1);
 }
 
 void
